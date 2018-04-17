@@ -16,11 +16,11 @@ class SslSessionServerInterceptor() extends ServerInterceptor {
     if (sslSession.isEmpty)
       logger.severe("No SSL Session found in server call")
 
-    sslSession.foreach(logPublicKey)
+    sslSession.foreach(logCertificate)
     next.startCall(call, headers)
   }
 
-  private def logPublicKey(sslSession: SSLSession): Unit =
+  private def logCertificate(sslSession: SSLSession): Unit =
     sslSession
       .getPeerCertificates
       .foreach(c => logger.info(CertificatePrinter.print(c)))
