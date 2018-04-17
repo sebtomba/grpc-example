@@ -13,7 +13,7 @@ object HelloWorldClient {
     val channel = NettyChannelBuilder.forAddress(host, port)
       .negotiationType(NegotiationType.TLS)
       .sslContext(sslContext)
-      .intercept(new HelloWorldClientInterceptor())
+      .intercept(new SslSessionClientInterceptor())
       .build()
     val blockingStub = GreeterGrpc.blockingStub(channel)
     new HelloWorldClient(channel, blockingStub)
@@ -34,7 +34,7 @@ class HelloWorldClient private(
   private val channel: ManagedChannel,
   private val blockingStub: GreeterBlockingStub
 ) {
-  private[this] val logger = Logger.getLogger(classOf[HelloWorldClient].getName)
+  private[this] val logger = Logger.getLogger(this.getClass.getName)
 
   def shutdown(): Unit = {
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
@@ -52,15 +52,5 @@ class HelloWorldClient private(
       case e: StatusRuntimeException =>
         logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus)
     }
-  }
-}
-
-class HelloWorldClientInterceptor() extends ClientInterceptor {
-  def interceptCall[ReqT, RespT](
-    method: MethodDescriptor[ReqT, RespT],
-    callOptions: CallOptions,
-    next: Channel): ClientCall[ReqT, RespT] = {
-    // This is obviously before TLS negotiation, so of not much value to us
-    next.newCall(method, callOptions)
   }
 }

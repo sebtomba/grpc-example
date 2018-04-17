@@ -7,7 +7,6 @@ import com.example.protos.hello.{GreeterGrpc, HelloReply, HelloRequest}
 import io.grpc._
 import io.grpc.netty.{GrpcSslContexts, NettyServerBuilder}
 import io.netty.handler.ssl.{ClientAuth, SslContext}
-import javax.net.ssl.SSLSession
 
 object HelloWorldServer {
 
@@ -25,7 +24,7 @@ object HelloWorldServer {
 class HelloWorldServer(executionContext: ExecutionContext, sslContext: SslContext) {
   self =>
 
-  private[this] val logger = Logger.getLogger(classOf[HelloWorldServer].getName)
+  private[this] val logger = Logger.getLogger(this.getClass.getName)
   private[this] var server: Server = _
 
   def start(): Unit = {
@@ -34,7 +33,7 @@ class HelloWorldServer(executionContext: ExecutionContext, sslContext: SslContex
       .sslContext(sslContext)
       .addService(ServerInterceptors.intercept(
         GreeterGrpc.bindService(new GreeterImpl, executionContext),
-        new HelloWorldServerInterceptor()))
+        new SslSessionServerInterceptor()))
       .build
       .start
 
@@ -69,27 +68,4 @@ class HelloWorldServer(executionContext: ExecutionContext, sslContext: SslContex
     }
   }
 
-}
-
-class HelloWorldServerInterceptor() extends ServerInterceptor {
-
-  private[this] val logger = Logger.getLogger(classOf[HelloWorldServerInterceptor].getName)
-
-  def interceptCall[ReqT, RespT](
-    call: ServerCall[ReqT, RespT],
-    headers: Metadata,
-    next: ServerCallHandler[ReqT, RespT]): ServerCall.Listener[ReqT] = {
-
-    val sslSession: Option[SSLSession] = Option(call.getAttributes.get(Grpc.TRANSPORT_ATTR_SSL_SESSION))
-    if (sslSession.isEmpty)
-      logger.severe("No SSL Session found in server call")
-
-    sslSession.foreach(logPublicKey)
-    next.startCall(call, headers)
-  }
-
-  private def logPublicKey(sslSession: SSLSession): Unit =
-    sslSession
-      .getPeerCertificates
-      .foreach(c => logger.info(c.getPublicKey.getEncoded.map("%02x".format(_)).mkString(":")))
 }
