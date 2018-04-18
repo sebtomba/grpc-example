@@ -6,15 +6,16 @@ import scala.concurrent.{ExecutionContext, Future}
 import com.example.protos.hello.{GreeterGrpc, HelloReply, HelloRequest}
 import io.grpc._
 import io.grpc.netty.{GrpcSslContexts, NettyServerBuilder}
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.netty.handler.ssl.{ClientAuth, SslContext}
 
 object HelloWorldServer {
 
   private val port = 50051
 
-  def buildSslContext(certChainFile: String, privateKeyFile: String, clientCertChainFile: String): SslContext = {
+  def buildSslContext(certChainFile: String, privateKeyFile: String): SslContext = {
     GrpcSslContexts.forServer(new File(certChainFile), new File(privateKeyFile))
-      .trustManager(new File(clientCertChainFile))
+      .trustManager(InsecureTrustManagerFactory.INSTANCE)
       .clientAuth(ClientAuth.OPTIONAL)
       .build()
   }

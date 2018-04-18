@@ -10,8 +10,8 @@ object CertificatePrinter {
   }
 
   @tailrec
-  def split(s: String, acc: List[String] = Nil): List[String] =
-    if(s.length == 0) acc.reverse
+  private def split(s: String, acc: List[String] = Nil): List[String] =
+    if (s.length == 0) acc.reverse
     else {
       val (a, b) = s.splitAt(64)
       split(b, a :: acc)

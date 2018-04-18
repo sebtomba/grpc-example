@@ -7,6 +7,7 @@ import com.example.protos.hello.{GreeterGrpc, HelloRequest}
 import io.grpc._
 import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
 import io.netty.handler.ssl.SslContext
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 
 object HelloWorldClient {
   def apply(host: String, port: Int, sslContext: SslContext): HelloWorldClient = {
@@ -19,12 +20,9 @@ object HelloWorldClient {
     new HelloWorldClient(channel, blockingStub)
   }
 
-  def buildSslContext(
-    clientCertChainFilePath: String,
-    clientPrivateKeyFilePath: String,
-    serverCertChainFilePath: String): SslContext = {
+  def buildSslContext(clientCertChainFilePath: String, clientPrivateKeyFilePath: String): SslContext = {
     val builder = GrpcSslContexts.forClient
-    builder.trustManager(new File(serverCertChainFilePath))
+    builder.trustManager(InsecureTrustManagerFactory.INSTANCE)
     builder.keyManager(new File(clientCertChainFilePath), new File(clientPrivateKeyFilePath))
     builder.build
   }

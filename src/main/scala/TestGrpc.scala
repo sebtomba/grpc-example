@@ -10,11 +10,7 @@ object TestGrpc {
   def main(args: Array[String]): Unit = {
     val server = new HelloWorldServer(
       ExecutionContext.global,
-      HelloWorldServer.buildSslContext(
-        serverCertChainFilePath,
-        serverPrivateKeyFilePath,
-        clientCertChainFilePath
-      )
+      HelloWorldServer.buildSslContext(serverCertChainFilePath, serverPrivateKeyFilePath)
     )
     server.start()
 
@@ -23,11 +19,7 @@ object TestGrpc {
     val client = HelloWorldClient(
       "localhost",
       50051,
-      HelloWorldClient.buildSslContext(
-        clientCertChainFilePath,
-        clientPrivateKeyFilePath,
-        serverCertChainFilePath
-      )
+      HelloWorldClient.buildSslContext(clientCertChainFilePath, clientPrivateKeyFilePath)
     )
     try {
       client.greet("world")
