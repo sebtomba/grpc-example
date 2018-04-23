@@ -62,7 +62,7 @@ class SslSessionClientCallInterceptor[ReqT, RespT](next: ClientCall[ReqT, RespT]
     }
 
     private def close(): Unit =
-      self.cancel(null, new RuntimeException("Wrong public key"))
+      throw Status.UNAUTHENTICATED.withDescription("Wrong public key").asRuntimeException()
 
   }
 }

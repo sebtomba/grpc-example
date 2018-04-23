@@ -16,24 +16,13 @@ class SslSessionServerInterceptor() extends ServerInterceptor {
     next: ServerCallHandler[ReqT, RespT]
   ): ServerCall.Listener[ReqT] = new InterceptionListener(next.startCall(call, headers), call)
 
-  private class InterceptionListener[ReqT, RespT](
-    next: ServerCall.Listener[ReqT],
-    call: ServerCall[ReqT, RespT]
-  ) extends ServerCall.Listener[ReqT] {
-
-    override def onHalfClose(): Unit =
-      try {
-        next.onHalfClose()
-      } catch {
-        case _: IllegalStateException =>
-      }
-
+  private class InterceptionListener[ReqT, RespT](next: ServerCall.Listener[ReqT], call: ServerCall[ReqT, RespT]) extends ServerCall.Listener[ReqT] {
+    override def onHalfClose(): Unit = next.onHalfClose()
     override def onCancel(): Unit = next.onCancel()
     override def onComplete(): Unit = next.onComplete()
     override def onReady(): Unit = next.onReady()
 
     override def onMessage(message: ReqT): Unit = {
-
       message match {
         case handshake: HandshakeRequest =>
           val sslSession: Option[SSLSession] = Option(call.getAttributes.get(Grpc.TRANSPORT_ATTR_SSL_SESSION))
@@ -51,12 +40,11 @@ class SslSessionServerInterceptor() extends ServerInterceptor {
               }
             }
           }
-
         case _ => next.onMessage(message)
       }
     }
 
     private def close(): Unit =
-      call.close(Status.UNAUTHENTICATED, new Metadata())
+      throw Status.UNAUTHENTICATED.withDescription("Wrong public key").asRuntimeException()
   }
 }
