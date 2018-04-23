@@ -32,10 +32,10 @@ val projectSettings = Seq(
 )
 
 val dependencies = Seq(
-  "io.monix" %% "monix" % "2.3.3",
   "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
   "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
-  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.8.Final"
+  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.8.Final",
+  "ch.qos.logback" % "logback-classic" % "1.0.13"
 )
 
 lazy val root = (project in file("."))

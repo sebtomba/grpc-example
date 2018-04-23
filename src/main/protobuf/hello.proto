@@ -1,11 +1,23 @@
 syntax = "proto3";
 
-package com.example.protos;
+package grpctest;
 
 // The greeting service definition.
 service Greeter {
+    // Performs a handshake
+    rpc Handshake (HandshakeRequest) returns (HandshakeReply);
     // Sends a greeting
-    rpc SayHello (HelloRequest) returns (HelloReply) {}
+    rpc SayHello (HelloRequest) returns (HelloReply);
+}
+
+// The request message containing the user's name.
+message HandshakeRequest {
+    string key = 1;
+}
+
+// The response message containing the greetings
+message HandshakeReply {
+    string key = 1;
 }
 
 // The request message containing the user's name.

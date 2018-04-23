@@ -1,9 +1,14 @@
+package grpctest
+
 import java.io.File
 import java.util.concurrent.TimeUnit
-import java.util.logging.{Level, Logger}
 
-import com.example.protos.hello.GreeterGrpc.GreeterBlockingStub
-import com.example.protos.hello.{GreeterGrpc, HelloRequest}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.Success
+
+import grpctest.hello.GreeterGrpc.GreeterStub
+import grpctest.hello._
 import io.grpc._
 import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
 import io.netty.handler.ssl.SslContext
@@ -16,8 +21,8 @@ object HelloWorldClient {
       .sslContext(sslContext)
       .intercept(new SslSessionClientInterceptor())
       .build()
-    val blockingStub = GreeterGrpc.blockingStub(channel)
-    new HelloWorldClient(channel, blockingStub)
+    val stub = GreeterGrpc.stub(channel)
+    new HelloWorldClient(channel, stub)
   }
 
   def buildSslContext(clientCertChainFilePath: String, clientPrivateKeyFilePath: String): SslContext = {
@@ -28,27 +33,25 @@ object HelloWorldClient {
   }
 }
 
-class HelloWorldClient private(
-  private val channel: ManagedChannel,
-  private val blockingStub: GreeterBlockingStub
-) {
-  private[this] val logger = Logger.getLogger(this.getClass.getName)
+class HelloWorldClient private(channel: ManagedChannel, stub: GreeterStub) {
+
+  private val logger = Logger(this.getClass)
 
   def shutdown(): Unit = {
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
+  def handshake(key: String): Future[String] = {
+    val request = HandshakeRequest(key)
+    stub.handshake(request)
+      .andThen {
+        case Success(reply) => logger.info(s"Got $reply")
+      }.map(_.key)
+  }
+
   /** Say hello to server. */
-  def greet(name: String): Unit = {
-    logger.info("Will try to greet " + name + " ...")
+  def greet(name: String): Future[String] = {
     val request = HelloRequest(name = name)
-    try {
-      val response = blockingStub.sayHello(request)
-      logger.info("Greeting: " + response.message)
-    }
-    catch {
-      case e: StatusRuntimeException =>
-        logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus)
-    }
+    stub.sayHello(request).map(_.message)
   }
 }

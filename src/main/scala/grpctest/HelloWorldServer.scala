@@ -1,9 +1,10 @@
+package grpctest
+
 import java.io.File
-import java.util.logging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
-import com.example.protos.hello.{GreeterGrpc, HelloReply, HelloRequest}
+import grpctest.hello._
 import io.grpc._
 import io.grpc.netty.{GrpcSslContexts, NettyServerBuilder}
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
@@ -22,19 +23,18 @@ object HelloWorldServer {
 
 }
 
-class HelloWorldServer(executionContext: ExecutionContext, sslContext: SslContext) {
+class HelloWorldServer(publicKey: String, executionContext: ExecutionContext, sslContext: SslContext) {
   self =>
 
-  private[this] val logger = Logger.getLogger(this.getClass.getName)
+  private val logger = Logger(this.getClass)
   private[this] var server: Server = _
 
   def start(): Unit = {
 
     server = NettyServerBuilder.forPort(HelloWorldServer.port)
       .sslContext(sslContext)
-      .addService(ServerInterceptors.intercept(
-        GreeterGrpc.bindService(new GreeterImpl, executionContext),
-        new SslSessionServerInterceptor()))
+      .addService(GreeterGrpc.bindService(new GreeterImpl, executionContext))
+      .intercept(new SslSessionServerInterceptor())
       .build
       .start
 
@@ -60,11 +60,17 @@ class HelloWorldServer(executionContext: ExecutionContext, sslContext: SslContex
 
   private class GreeterImpl extends GreeterGrpc.Greeter {
 
-    private[this] val logger = Logger.getLogger(classOf[GreeterImpl].getName)
+    private val logger = Logger(this.getClass)
 
-    override def sayHello(req: HelloRequest): Future[HelloReply] = {
-      logger.info(s"Got $req")
-      val reply = HelloReply(message = "Hello " + req.name)
+    def handshake(request: HandshakeRequest): Future[HandshakeReply] = {
+      logger.info(s"Got $request")
+      val reply = HandshakeReply(publicKey)
+      Future.successful(reply)
+    }
+
+    override def sayHello(request: HelloRequest): Future[HelloReply] = {
+      logger.info(s"Got $request")
+      val reply = HelloReply(message = "Hello " + request.name)
       Future.successful(reply)
     }
   }

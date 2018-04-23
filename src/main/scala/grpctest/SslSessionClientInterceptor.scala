@@ -1,5 +1,8 @@
-import java.util.logging.Logger
+package grpctest
 
+import java.util.Base64
+
+import grpctest.hello.HandshakeReply
 import io.grpc._
 import javax.net.ssl.SSLSession
 
@@ -16,7 +19,7 @@ class SslSessionClientInterceptor() extends ClientInterceptor {
 class SslSessionClientCallInterceptor[ReqT, RespT](next: ClientCall[ReqT, RespT]) extends ClientCall[ReqT, RespT] {
   self =>
 
-  private[this] val logger = Logger.getLogger("SslSessionClientCallInterceptor")
+  private val logger = Logger(this.getClass)
 
   def cancel(message: String, cause: Throwable): Unit = next.cancel(message, cause)
   def request(numMessages: Int): Unit = next.request(numMessages)
@@ -31,23 +34,35 @@ class SslSessionClientCallInterceptor[ReqT, RespT](next: ClientCall[ReqT, RespT]
     next.start(new InterceptionListener(responseListener), headers)
 
   private class InterceptionListener(next: ClientCall.Listener[RespT]) extends ClientCall.Listener[RespT] {
-    override def onMessage(message: RespT): Unit = next.onMessage(message)
     override def onClose(status: Status, trailers: Metadata): Unit = next.onClose(status, trailers)
     override def onReady(): Unit = next.onReady()
+    override def onHeaders(headers: Metadata): Unit = next.onHeaders(headers)
 
-    override def onHeaders(headers: Metadata): Unit = {
-      val sslSession: Option[SSLSession] = Option(self.getAttributes.get(Grpc.TRANSPORT_ATTR_SSL_SESSION))
-      if (sslSession.isEmpty)
-        logger.severe("No SSL Session found in server call")
+    override def onMessage(message: RespT): Unit = {
+      message match {
+        case handshake: HandshakeReply =>
+          val sslSession: Option[SSLSession] = Option(self.getAttributes.get(Grpc.TRANSPORT_ATTR_SSL_SESSION))
+          if (sslSession.isEmpty) {
+            logger.error("No SSL Session found in client call")
+            close()
+          } else {
+            sslSession.foreach { session =>
+              val pubKey = Base64.getEncoder.encodeToString(session.getPeerCertificates.head.getPublicKey.getEncoded)
+              if (pubKey == handshake.key) {
+                next.onMessage(message)
+              } else {
+                logger.error("Wrong public key")
+                close()
+              }
+            }
+          }
 
-      sslSession.foreach(logCertificate)
-      next.onHeaders(headers)
+        case _ => next.onMessage(message)
+      }
     }
 
+    private def close(): Unit =
+      self.cancel(null, new RuntimeException("Wrong public key"))
 
-    private def logCertificate(sslSession: SSLSession): Unit =
-      sslSession
-        .getPeerCertificates
-        .foreach(c => logger.info(CertificatePrinter.print(c)))
   }
 }
