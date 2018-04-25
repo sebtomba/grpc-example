@@ -15,6 +15,7 @@ object HelloWorldServer {
   private val port = 50051
 
   def buildSslContext(certChainFile: String, privateKeyFile: String): SslContext = {
+
     GrpcSslContexts.forServer(new File(certChainFile), new File(privateKeyFile))
       .trustManager(InsecureTrustManagerFactory.INSTANCE)
       .clientAuth(ClientAuth.OPTIONAL)
