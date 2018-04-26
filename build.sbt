@@ -34,7 +34,7 @@ val projectSettings = Seq(
 val dependencies = Seq(
   "io.grpc" % "grpc-netty" % scalapb.compiler.Version.grpcJavaVersion,
   "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
-  "io.netty" % "netty-tcnative-boringssl-static" % "2.0.8.Final",
+  "io.netty" % "netty-tcnative" % "2.0.8.Final" classifier "osx-x86_64",
   "ch.qos.logback" % "logback-classic" % "1.0.13"
 )
 
