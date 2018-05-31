@@ -6,7 +6,6 @@ import grpctest.hello.HandshakeReply
 import io.grpc._
 import javax.net.ssl.SSLSession
 
-
 class SslSessionClientInterceptor() extends ClientInterceptor {
   def interceptCall[ReqT, RespT](
     method: MethodDescriptor[ReqT, RespT],

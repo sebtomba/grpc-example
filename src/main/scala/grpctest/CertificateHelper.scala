@@ -10,12 +10,11 @@ object CertificateHelper {
     publicKey(fromFile(new File(certFilePath)))
 
   def fromFile(certFile: File): X509Certificate = {
-    val cf = CertificateFactory.getInstance("X.509")
+    val cf = CertificateFactory.getInstance("X.509", "BC")
     val is = new FileInputStream(certFile)
     cf.generateCertificate(is).asInstanceOf[X509Certificate]
   }
 
   def publicKey(certificate: X509Certificate): String =
     Base64.getEncoder.encodeToString(certificate.getPublicKey.getEncoded)
-
 }

@@ -1,11 +1,14 @@
 package grpctest
 
+import java.security.Security
+
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 
 import io.grpc.StatusRuntimeException
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 object TestGrpc {
 
@@ -17,6 +20,8 @@ object TestGrpc {
   val serverPrivateKeyFilePath = "server.key.pem"
 
   def main(args: Array[String]): Unit = {
+    Security.removeProvider("SunEC")
+    Security.insertProviderAt(new BouncyCastleProvider(), 0)
 
     val publicKeyClient = CertificateHelper.publicKeyFrom(clientCertChainFilePath)
     val publicKeyServer = CertificateHelper.publicKeyFrom(serverCertChainFilePath)

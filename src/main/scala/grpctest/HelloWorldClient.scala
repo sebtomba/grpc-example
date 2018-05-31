@@ -3,14 +3,14 @@ package grpctest
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
 
-import grpctest.hello.GreeterGrpc.GreeterStub
 import grpctest.hello._
+import grpctest.hello.GreeterGrpc.GreeterStub
 import io.grpc._
-import io.grpc.netty.{GrpcSslContexts, NegotiationType, NettyChannelBuilder}
+import io.grpc.netty._
 import io.netty.handler.ssl.SslContext
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 

@@ -7,8 +7,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import grpctest.hello._
 import io.grpc._
 import io.grpc.netty.{GrpcSslContexts, NettyServerBuilder}
+import io.netty.handler.ssl._
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
-import io.netty.handler.ssl.{ClientAuth, SslContext}
 
 object HelloWorldServer {
 
